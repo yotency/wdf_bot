@@ -39,11 +39,11 @@ const GAME_SERVER_ID = 'bf3f06f5-6f4f-4b06-8cac-70bb1a558103';
 client.once('clientReady', () => {
     console.log("✅ Le bot est en ligne ! Connecté en tant que : " + client.user.tag);
 
-    // Définir la Rich Presence (Statut du bot)
+    // Définir la Rich Presence (Statut du bot) avec les backticks corrects
     client.user.setPresence({
         activities: [{
             name: `Wardogs (ID: \${GAME_SERVER_ID})`, 
-            type: ActivityType.Playing, // Affichera "Joue à Wardogs (ID: ...)" sur le profil du bot
+            type: ActivityType.Playing,     
         }],
         status: 'online', 
     });
