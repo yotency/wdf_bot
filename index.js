@@ -13,7 +13,8 @@ const {
     TextInputBuilder,
     TextInputStyle,
     MessageFlags,
-    AttachmentBuilder
+    AttachmentBuilder,
+    ActivityType
 } = require('discord.js');
 
 const client = new Client({
@@ -37,6 +38,15 @@ const GAME_SERVER_ID = 'bf3f06f5-6f4f-4b06-8cac-70bb1a558103';
 
 client.once('clientReady', () => {
     console.log("✅ Le bot est en ligne ! Connecté en tant que : " + client.user.tag);
+
+    // Définir la Rich Presence (Statut du bot)
+    client.user.setPresence({
+        activities: [{
+            name: `Wardogs (ID: \${GAME_SERVER_ID})`, 
+            type: ActivityType.Playing, // Affichera "Joue à Wardogs (ID: ...)" sur le profil du bot
+        }],
+        status: 'online', 
+    });
 });
 
 client.on('messageCreate', async (message) => {
@@ -267,7 +277,7 @@ client.on('messageCreate', async (message) => {
         }
 
         const parts = lowerContent.split(/\s+/);
-        const statusArg = parts[1]; // Récupère le mot après la commande (ouvert / ferme / fermé)
+        const statusArg = parts[1];
 
         if (statusArg !== 'ouvert' && statusArg !== 'ferme' && statusArg !== 'fermé') {
             return message.reply({ 
@@ -280,7 +290,7 @@ client.on('messageCreate', async (message) => {
 
         const etatEmbed = new EmbedBuilder()
             .setTitle('🖥️ Statut du Serveur de Jeu - Wardogs')
-            .setColor(isOpen ? 0x57F287 : 0xED4245) // Vert si ouvert, Rouge si fermé
+            .setColor(isOpen ? 0x57F287 : 0xED4245)
             .setDescription(isOpen 
                 ? "🟢 **Le serveur de jeu est actuellement OUVERT ! Vous pouvez rejoindre la session.**" 
                 : "🔴 **Le serveur de jeu est actuellement FERMÉ / MAINTENANCE.**"
