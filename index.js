@@ -39,10 +39,10 @@ const GAME_SERVER_ID = 'bf3f06f5-6f4f-4b06-8cac-70bb1a558103';
 client.once('clientReady', () => {
     console.log("✅ Le bot est en ligne ! Connecté en tant que : " + client.user.tag);
 
-    // Définir la Rich Presence (Affiche : Joue à Wardogs)
+    // Définir la Rich Presence
     client.user.setPresence({
         activities: [{
-            name: 'Joue à Wardogs', 
+            name: '🛡️ Wardogs', 
             type: ActivityType.Playing, 
         }],
         status: 'online', 
@@ -105,7 +105,7 @@ client.on('messageCreate', async (message) => {
                 "**1. Respect & Courtoisie**\n" +
                 "Le respect mutuel est obligatoire. Aucune insulte, propos haineux, raciste, sexiste ou discriminatoire ne sera toléré.\n\n" +
                 "**2. Pas de Spam ni de Publicité**\n" +
-                "Le spam, le flood et la publicité non autorisée (en MP ou dans les salons) sont strictement interdits.\n\n" +
+                "Le spam, le flood et la publicité non autorisée (en MP ou dans les salons) sont strictly interdits.\n\n" +
                 "**3. Pseudo & Photo de profil**\n" +
                 "Merci d'avoir un pseudo et une photo de profil appropriés et lisibles.\n\n" +
                 "**4. Respect des salons**\n" +
@@ -186,6 +186,12 @@ client.on('messageCreate', async (message) => {
                     description: 'Signaler un comportement ou un problème',
                     value: 'report',
                     emoji: '🛡️',
+                },
+                {
+                    label: 'Demande de déban',
+                    description: 'Faire une demande de débannissement du serveur',
+                    value: 'unban',
+                    emoji: '❗',
                 },
             ]);
 
@@ -379,8 +385,49 @@ client.on('interactionCreate', async (interaction) => {
                 .setPlaceholder('Expliquez ce qui s\'est passé...')
                 .setRequired(true);
 
+            const proofInput = new TextInputBuilder()
+                .setCustomId('proof_video')
+                .setLabel('Preuve vidéo (Oui / Non / Lien) :')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Indiquez Oui, Non ou collez un lien vidéo')
+                .setRequired(true);
+
             modal.addComponents(
                 new ActionRowBuilder().addComponents(accusedInput),
+                new ActionRowBuilder().addComponents(reasonInput),
+                new ActionRowBuilder().addComponents(proofInput)
+            );
+
+            await interaction.showModal(modal);
+        } else if (category === 'unban') {
+            const modal = new ModalBuilder()
+                .setCustomId('ticket_modal_unban')
+                .setTitle('Formulaire de Demande de Déban');
+
+            const pseudoIgInput = new TextInputBuilder()
+                .setCustomId('pseudo_ig')
+                .setLabel('Pseudo IG (En jeu) :')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Votre pseudo exact dans le jeu')
+                .setRequired(true);
+
+            const steamIdInput = new TextInputBuilder()
+                .setCustomId('steam_id')
+                .setLabel('ID Steam :')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Ex: 76561198xxxxxxxxx')
+                .setRequired(true);
+
+            const reasonInput = new TextInputBuilder()
+                .setCustomId('ticket_reason')
+                .setLabel('Raison / Explications :')
+                .setStyle(TextInputStyle.Paragraph)
+                .setPlaceholder('Pourquoi souhaitez-vous être débanni ? Expliquez votre situation...')
+                .setRequired(true);
+
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(pseudoIgInput),
+                new ActionRowBuilder().addComponents(steamIdInput),
                 new ActionRowBuilder().addComponents(reasonInput)
             );
 
@@ -409,11 +456,25 @@ client.on('interactionCreate', async (interaction) => {
         const reason = interaction.fields.getTextInputValue('ticket_reason');
         
         let accused = null;
+        let proofVideo = null;
+        let pseudoIg = null;
+        let steamId = null;
+
         if (category === 'report') {
             try {
                 accused = interaction.fields.getTextInputValue('accused_user');
+                proofVideo = interaction.fields.getTextInputValue('proof_video');
             } catch (e) {
                 accused = 'Non renseigné';
+                proofVideo = 'Non renseigné';
+            }
+        } else if (category === 'unban') {
+            try {
+                pseudoIg = interaction.fields.getTextInputValue('pseudo_ig');
+                steamId = interaction.fields.getTextInputValue('steam_id');
+            } catch (e) {
+                pseudoIg = 'Non renseigné';
+                steamId = 'Non renseigné';
             }
         }
 
@@ -475,11 +536,13 @@ client.on('interactionCreate', async (interaction) => {
 
         const ticketEmbed = new EmbedBuilder()
             .setTitle('Ticket : ' + category.toUpperCase())
-            .setColor(category === 'report' ? 0xED4245 : 0x57F287)
+            .setColor(category === 'report' || category === 'unban' ? 0xED4245 : 0x57F287)
             .setTimestamp();
 
         if (category === 'report') {
-            ticketEmbed.setDescription('Bonjour <@' + user.id + '>, signalement pris en compte.\n\n👤 **Personne signalée :** `' + accused + '`\n\n📝 **Détails :**\n```\n' + reason + '\n```');
+            ticketEmbed.setDescription('Bonjour <@' + user.id + '>, signalement pris en compte.\n\n👤 **Personne signalée :** `' + accused + '`\n📹 **Preuve vidéo :** `' + proofVideo + '`\n\n📝 **Détails :**\n```\n' + reason + '\n```');
+        } else if (category === 'unban') {
+            ticketEmbed.setDescription('Bonjour <@' + user.id + '>, votre demande de déban a été transmise au staff.\n\n🎮 **Pseudo IG :** `' + pseudoIg + '`\n🆔 **ID Steam :** `' + steamId + '`\n\n📝 **Raison / Explications :**\n```\n' + reason + '\n```');
         } else {
             ticketEmbed.setDescription('Bonjour <@' + user.id + '>, bienvenue dans ton ticket !\n\n**Raison / Message :**\n```\n' + reason + '\n```');
         }
