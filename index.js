@@ -251,15 +251,52 @@ client.on('messageCreate', async (message) => {
                 { name: '🆔 ID du Serveur', value: `\`\`\`${GAME_SERVER_ID}\`\`\``, inline: false }
             )
             .setTimestamp()
-            .setFooter({ text: `Demandé par ${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
+            .setFooter({ text: `Demandé par \${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
 
         await message.channel.send({ embeds: [serverEmbed] });
+        message.delete().catch(() => {});
+    }
+
+    // ==========================================
+    // 6. COMMANDE ÉTAT DU SERVEUR DE JEU (!etat-serveur)
+    // ==========================================
+    if (message.content.startsWith('!etat-serveur')) {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande.", flags: MessageFlags.Ephemeral });
+        }
+
+        const args = message.content.slice(13).trim().toLowerCase();
+
+        if (args !== 'ouvert' && args !== 'ferme' && args !== 'fermé') {
+            return message.reply({ 
+                content: '❌ Utilisation incorrecte !\nFormat attendu : `!etat-serveur ouvert` ou `!etat-serveur ferme`',
+                flags: MessageFlags.Ephemeral 
+            });
+        }
+
+        const isOpen = args === 'ouvert';
+
+        const etatEmbed = new EmbedBuilder()
+            .setTitle('🖥️ Statut du Serveur de Jeu - Wardogs')
+            .setColor(isOpen ? 0x57F287 : 0xED4245) // Vert si ouvert, Rouge si fermé
+            .setDescription(isOpen 
+                ? "🟢 **Le serveur de jeu est actuellement OUVERT ! Vous pouvez rejoindre la session.**" 
+                : "🔴 **Le serveur de jeu est actuellement FERMÉ / MAINTENANCE.**"
+            )
+            .addFields(
+                { name: '🆔 ID du Serveur', value: `\`\`\`${GAME_SERVER_ID}\`\`\``, inline: false },
+                { name: '📌 État', value: isOpen ? '🟢 **OUVERT**' : '🔴 **FERMÉ**', inline: false }
+            )
+            .setTimestamp()
+            .setFooter({ text: `Mis à jour par ${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
+
+        await message.channel.send({ embeds: [etatEmbed] });
         message.delete().catch(() => {});
     }
 });
 
 // ==========================================
-// 6. GESTION DES INTERACTIONS
+// 7. GESTION DES INTERACTIONS
 // ==========================================
 client.on('interactionCreate', async (interaction) => {
 
