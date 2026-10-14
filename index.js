@@ -39,7 +39,6 @@ const GAME_SERVER_ID = 'bf3f06f5-6f4f-4b06-8cac-70bb1a558103';
 client.once('clientReady', () => {
     console.log("✅ Le bot est en ligne ! Connecté en tant que : " + client.user.tag);
 
-    // Définir la Rich Presence
     client.user.setPresence({
         activities: [{
             name: '🛡️ Wardogs', 
@@ -105,7 +104,7 @@ client.on('messageCreate', async (message) => {
                 "**1. Respect & Courtoisie**\n" +
                 "Le respect mutuel est obligatoire. Aucune insulte, propos haineux, raciste, sexiste ou discriminatoire ne sera toléré.\n\n" +
                 "**2. Pas de Spam ni de Publicité**\n" +
-                "Le spam, le flood et la publicité non autorisée (en MP ou dans les salons) sont strictly interdits.\n\n" +
+                "Le spam, le flood et la publicité non autorisée (en MP ou dans les salons) sont strictement interdits.\n\n" +
                 "**3. Pseudo & Photo de profil**\n" +
                 "Merci d'avoir un pseudo et une photo de profil appropriés et lisibles.\n\n" +
                 "**4. Respect des salons**\n" +
