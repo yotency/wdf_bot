@@ -35,6 +35,7 @@ const LOGS_CHANNEL_ID = '1559381144540020767';
 const SUSPECT_COMMAND_CHANNEL_ID = '1559338836620746813'; 
 const SUSPECT_PING_ROLE_ID = '1555953788249186437'; 
 const GAME_SERVER_ID = 'bf3f06f5-6f4f-4b06-8cac-70bb1a558103'; 
+const SANCTION_LOGS_CHANNEL_ID = '1556137528443150427'; // ID de ton salon #sanction
 
 client.once('clientReady', () => {
     console.log("✅ Le bot est en ligne ! Connecté en tant que : " + client.user.tag);
@@ -273,7 +274,7 @@ client.on('messageCreate', async (message) => {
     }
 
     // ==========================================
-    // 6. COMMANDE ÉTAT DU SERVEUR DE JEU (!etat-serveur / !état-serveur)
+    // 6. COMMANDE ÉTAT DU SERVEUR DE JEU (!etat-serveur)
     // ==========================================
     const lowerContent = message.content.toLowerCase().trim();
     if (lowerContent.startsWith('!etat-serveur') || lowerContent.startsWith('!état-serveur')) {
@@ -305,15 +306,41 @@ client.on('messageCreate', async (message) => {
                 { name: '📌 État', value: isOpen ? '🟢 **OUVERT**' : '🔴 **FERMÉ**', inline: false }
             )
             .setTimestamp()
-            .setFooter({ text: `Mis à jour par ${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
+            .setFooter({ text: `Mis à jour par \${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
 
         await message.channel.send({ embeds: [etatEmbed] });
+        message.delete().catch(() => {});
+    }
+
+    // ==========================================
+    // 7. COMMANDE SANCTION POUR LES ADMINS (!sanction)
+    // ==========================================
+    if (message.content === '!sanction') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers) && 
+            !message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply({ content: "❌ Vous n'avez pas la permission d'utiliser cette commande.", flags: MessageFlags.Ephemeral });
+        }
+
+        const sanctionEmbed = new EmbedBuilder()
+            .setTitle("🔨 Enregistrement de Sanction")
+            .setDescription("Cliquez sur le bouton ci-dessous pour ouvrir le formulaire de sanction de joueur.")
+            .setColor(0xED4245);
+
+        const btn = new ButtonBuilder()
+            .setCustomId('open_sanction_modal')
+            .setLabel('Enregistrer une sanction')
+            .setEmoji('⚖️')
+            .setStyle(ButtonStyle.Danger);
+
+        const row = new ActionRowBuilder().addComponents(btn);
+
+        await message.channel.send({ embeds: [sanctionEmbed], components: [row] });
         message.delete().catch(() => {});
     }
 });
 
 // ==========================================
-// 7. GESTION DES INTERACTIONS
+// 8. GESTION DES INTERACTIONS
 // ==========================================
 client.on('interactionCreate', async (interaction) => {
 
@@ -344,12 +371,12 @@ client.on('interactionCreate', async (interaction) => {
 
             try {
                 await interaction.user.send(
-                    `🎉 **Bienvenue sur ${interaction.guild.name} !**\n\n` +
-                    `Ton rôle **${role.name}** t'a été attribué avec succès suite à la validation du règlement.\n` +
+                    `🎉 **Bienvenue sur \${interaction.guild.name} !**\n\n` +
+                    `Ton rôle **\${role.name}** t'a été attribué avec succès suite à la validation du règlement.\n` +
                     `Tu as désormais accès à l'intégralité des salons textuels et vocaux du serveur. Bon jeu à toi !`
                 );
             } catch (dmError) {
-                console.log(`⚠️ Impossible d'envoyer un MP à ${interaction.user.tag} (MP désactivés).`);
+                console.log(`⚠️ Impossible d'envoyer un MP à \${interaction.user.tag} (MP désactivés).`);
             }
 
         } catch (error) {
@@ -361,7 +388,88 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 
-    // B. Sélection dans le menu déroulant des tickets -> Ouverture du Modal
+    // B. Ouverture du modal de Sanction
+    if (interaction.isButton() && interaction.customId === 'open_sanction_modal') {
+        const modal = new ModalBuilder()
+            .setCustomId('sanction_modal_submit')
+            .setTitle('Formulaire de Sanction');
+
+        const targetInput = new TextInputBuilder()
+            .setCustomId('sanction_target')
+            .setLabel('Joueur sanctionné (Pseudo / Steam ID) :')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: PseudoGame / 76561198xxxxxxxxx')
+            .setRequired(true);
+
+        const typeInput = new TextInputBuilder()
+            .setCustomId('sanction_type')
+            .setLabel('Type de sanction :')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: Ban Perma, Ban 7 jours, Kick, Warn...')
+            .setRequired(true);
+
+        const reasonInput = new TextInputBuilder()
+            .setCustomId('sanction_reason')
+            .setLabel('Raison du bannissement / sanction :')
+            .setStyle(TextInputStyle.Paragraph)
+            .setPlaceholder('Expliquez précisément le motif...')
+            .setRequired(true);
+
+        const proofInput = new TextInputBuilder()
+            .setCustomId('sanction_proof')
+            .setLabel('Preuves (Lien image / vidéo) :')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('https://...')
+            .setRequired(false);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(targetInput),
+            new ActionRowBuilder().addComponents(typeInput),
+            new ActionRowBuilder().addComponents(reasonInput),
+            new ActionRowBuilder().addComponents(proofInput)
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    // C. Traitement du formulaire de Sanction soumis
+    if (interaction.isModalSubmit() && interaction.customId === 'sanction_modal_submit') {
+        const target = interaction.fields.getTextInputValue('sanction_target');
+        const type = interaction.fields.getTextInputValue('sanction_type');
+        const reason = interaction.fields.getTextInputValue('sanction_reason');
+        const proof = interaction.fields.getTextInputValue('sanction_proof') || 'Aucune preuve fournie';
+
+        const logsChannel = interaction.guild.channels.cache.get(SANCTION_LOGS_CHANNEL_ID);
+
+        const sanctionEmbed = new EmbedBuilder()
+            .setTitle('🔨 Nouvelle Sanction : ' + type)
+            .setColor(0xED4245)
+            .addFields(
+                { name: '👤 Joueur Sanctionné', value: '`' + target + '`', inline: true },
+                { name: '🛡️ Modérateur / Admin', value: '<@' + interaction.user.id + '>', inline: true },
+                { name: '📋 Type de Sanction', value: '`' + type + '`', inline: true },
+                { name: '📝 Raison', value: '```\n' + reason + '\n```', inline: false },
+                { name: '🔗 Preuve(s)', value: proof, inline: false }
+            )
+            .setThumbnail('https://cdn-icons-png.flaticon.com/512/497/497738.png')
+            .setTimestamp()
+            .setFooter({ text: 'ID Modérateur: ' + interaction.user.id });
+
+        if (logsChannel) {
+            await logsChannel.send({ embeds: [sanctionEmbed] });
+            await interaction.reply({ 
+                content: '✅ La sanction contre **' + target + '** a bien été enregistrée dans ' + logsChannel + '.', 
+                flags: MessageFlags.Ephemeral 
+            });
+        } else {
+            await interaction.reply({ 
+                content: '⚠️ Erreur : Salon de logs introuvable. Veuillez vérifier l\'ID `' + SANCTION_LOGS_CHANNEL_ID + '`.', 
+                flags: MessageFlags.Ephemeral 
+            });
+        }
+    }
+
+    // D. Sélection dans le menu déroulant des tickets -> Ouverture du Modal
     if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_select') {
         const category = interaction.values[0];
 
@@ -449,7 +557,7 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 
-    // C. Soumission du Modal -> Création effective du salon privé
+    // E. Soumission du Modal de ticket -> Création effective du salon privé
     if (interaction.isModalSubmit() && interaction.customId.startsWith('ticket_modal_')) {
         const category = interaction.customId.replace('ticket_modal_', '');
         const reason = interaction.fields.getTextInputValue('ticket_reason');
@@ -567,7 +675,7 @@ client.on('interactionCreate', async (interaction) => {
         });
     }
 
-    // D. Fermeture du ticket, génération du transcript, envoi en MP et logs
+    // F. Fermeture du ticket, génération du transcript, envoi en MP et logs
     if (interaction.isButton() && interaction.customId === 'close_ticket') {
         await interaction.reply('🔒 Génération du transcript et fermeture du salon dans 5 secondes...');
 
@@ -607,7 +715,7 @@ client.on('interactionCreate', async (interaction) => {
             }
 
             if (LOGS_CHANNEL_ID && LOGS_CHANNEL_ID.trim() !== '') {
-                const logsChannel = interaction.guild.channels.cache.get(LOGS_CHANNEL_ID.trim());
+                const logsChannel = interaction.guild.channels.get ? interaction.guild.channels.cache.get(LOGS_CHANNEL_ID.trim()) : null;
                 if (logsChannel) {
                     const logEmbed = new EmbedBuilder()
                         .setTitle("📜 Ticket Fermé - Transcript")
