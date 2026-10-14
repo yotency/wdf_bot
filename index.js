@@ -32,8 +32,8 @@ const MEMBER_ROLE_ID = '1555965378965012490';
 const TICKET_CATEGORY_ID = '1559370830033719317';
 const LOGS_CHANNEL_ID = '1559381144540020767';
 const SUSPECT_COMMAND_CHANNEL_ID = '1559338836620746813'; 
-const SUSPECT_PING_ROLE_ID = '1555953788249186437'; // Rôle pingué lors d'un signalement
-const GAME_SERVER_ID = 'bf3f06f5-6f4f-4b06-8cac-70bb1a558103'; // ID de ton serveur de jeu (copiable)
+const SUSPECT_PING_ROLE_ID = '1555953788249186437'; 
+const GAME_SERVER_ID = 'bf3f06f5-6f4f-4b06-8cac-70bb1a558103'; 
 
 client.once('clientReady', () => {
     console.log("✅ Le bot est en ligne ! Connecté en tant que : " + client.user.tag);
@@ -258,23 +258,25 @@ client.on('messageCreate', async (message) => {
     }
 
     // ==========================================
-    // 6. COMMANDE ÉTAT DU SERVEUR DE JEU (!etat-serveur)
+    // 6. COMMANDE ÉTAT DU SERVEUR DE JEU (!etat-serveur / !état-serveur)
     // ==========================================
-    if (message.content.startsWith('!etat-serveur')) {
+    const lowerContent = message.content.toLowerCase().trim();
+    if (lowerContent.startsWith('!etat-serveur') || lowerContent.startsWith('!état-serveur')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
             return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande.", flags: MessageFlags.Ephemeral });
         }
 
-        const args = message.content.slice(13).trim().toLowerCase();
+        const parts = lowerContent.split(/\s+/);
+        const statusArg = parts[1]; // Récupère le mot après la commande (ouvert / ferme / fermé)
 
-        if (args !== 'ouvert' && args !== 'ferme' && args !== 'fermé') {
+        if (statusArg !== 'ouvert' && statusArg !== 'ferme' && statusArg !== 'fermé') {
             return message.reply({ 
                 content: '❌ Utilisation incorrecte !\nFormat attendu : `!etat-serveur ouvert` ou `!etat-serveur ferme`',
                 flags: MessageFlags.Ephemeral 
             });
         }
 
-        const isOpen = args === 'ouvert';
+        const isOpen = statusArg === 'ouvert';
 
         const etatEmbed = new EmbedBuilder()
             .setTitle('🖥️ Statut du Serveur de Jeu - Wardogs')
