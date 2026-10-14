@@ -41,7 +41,7 @@ client.once('clientReady', () => {
 
     client.user.setPresence({
         activities: [{
-            name: '🛡️ Wardogs', 
+            name: 'Joue à Wardogs', 
             type: ActivityType.Playing, 
         }],
         status: 'online', 
