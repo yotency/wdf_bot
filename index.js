@@ -79,7 +79,7 @@ client.on('messageCreate', async (message) => {
             .setDescription(description.replace(/\\n/g, '\n'))
             .setColor(isNaN(colorNumber) ? 0x5865F2 : colorNumber)
             .setTimestamp()
-            .setFooter({ text: `Annonce postée par \${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
+            .setFooter({ text: 'Annonce postée par ' + message.author.tag, iconURL: message.author.displayAvatarURL() });
 
         await message.channel.send({ embeds: [customEmbed] });
         message.delete().catch(() => {});
@@ -104,7 +104,7 @@ client.on('messageCreate', async (message) => {
                 "**1. Respect & Courtoisie**\n" +
                 "Le respect mutuel est obligatoire. Aucune insulte, propos haineux, raciste, sexiste ou discriminatoire ne sera toléré.\n\n" +
                 "**2. Pas de Spam ni de Publicité**\n" +
-                "Le spam, le flood et la publicité non autorisée (en MP ou dans les salons) sont strictement interdits.\n\n" +
+                "Le spam, le flood et la publicité non autorisée (en MP ou dans les salons) sont strictly interdits.\n\n" +
                 "**3. Pseudo & Photo de profil**\n" +
                 "Merci d'avoir un pseudo et une photo de profil appropriés et lisibles.\n\n" +
                 "**4. Respect des salons**\n" +
@@ -201,7 +201,7 @@ client.on('messageCreate', async (message) => {
     }
 
     // ==========================================
-    // 4. COMMANDE DE SUIVI DES SUSPECTS (!suspect)
+    // 4. COMMANDE DE SUIVI DES SUSPECTS (!suspect) - CORRIGÉE
     // ==========================================
     if (message.content.startsWith('!suspect')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
@@ -210,7 +210,7 @@ client.on('messageCreate', async (message) => {
 
         if (message.channel.id !== SUSPECT_COMMAND_CHANNEL_ID) {
             return message.reply({ 
-                content: `❌ Tu ne peux pas utiliser cette commande ici ! Utilise-la dans le salon <#\${SUSPECT_COMMAND_CHANNEL_ID}>.`, 
+                content: "❌ Tu ne peux pas utiliser cette commande ici ! Utilise-la dans le salon <#" + SUSPECT_COMMAND_CHANNEL_ID + ">.", 
                 flags: MessageFlags.Ephemeral 
             });
         }
@@ -232,17 +232,18 @@ client.on('messageCreate', async (message) => {
             .setTitle('🚨 Dossier de Surveillance - Suspect')
             .setColor(0xF1C40F)
             .addFields(
-                { name: '👤 Joueur', value: `\`${playerName}\``, inline: true },
-                { name: 'Steam ID', value: `\`${steamId}\``, inline: true },
-                { name: '📝 Raison / Détails', value: `\`\`\`\n${reason}\n\`\`\``, inline: false }
+                { name: '👤 Joueur', value: '`' + playerName + '`', inline: true },
+                { name: 'Steam ID', value: '`' + steamId + '`', inline: true },
+                { name: '📝 Raison / Détails', value: '```\n' + reason + '\n```', inline: false }
             )
             .setTimestamp()
-            .setFooter({ text: `Signalé par \${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
+            .setFooter({ text: 'Signalé par ' + message.author.tag, iconURL: message.author.displayAvatarURL() });
 
-        const rolePing = SUSPECT_PING_ROLE_ID ? `<@&\${SUSPECT_PING_ROLE_ID}>` : '';
+        const rolePing = SUSPECT_PING_ROLE_ID ? '<@&' + SUSPECT_PING_ROLE_ID + '>' : '';
+        const messageContentText = rolePing + ' - Nouveau joueur suspect signalé par <@' + message.author.id + '> :';
 
         await message.channel.send({ 
-            content: `\${rolePing} - Nouveau joueur suspect signalé par <@\${message.author.id}> :`, 
+            content: messageContentText, 
             embeds: [suspectEmbed],
             allowedMentions: { roles: [SUSPECT_PING_ROLE_ID] }
         });
@@ -263,10 +264,10 @@ client.on('messageCreate', async (message) => {
             .setColor(0x5865F2)
             .setDescription("Voici l'ID de notre serveur de jeu. Tu peux le copier-coller pour le retrouver facilement :")
             .addFields(
-                { name: '🆔 ID du Serveur', value: `\`\`\`${GAME_SERVER_ID}\`\`\``, inline: false }
+                { name: '🆔 ID du Serveur', value: '```' + GAME_SERVER_ID + '```', inline: false }
             )
             .setTimestamp()
-            .setFooter({ text: `Demandé par \${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
+            .setFooter({ text: 'Demandé par ' + message.author.tag, iconURL: message.author.displayAvatarURL() });
 
         await message.channel.send({ embeds: [serverEmbed] });
         message.delete().catch(() => {});
@@ -301,11 +302,11 @@ client.on('messageCreate', async (message) => {
                 : "🔴 **Le serveur de jeu est actuellement FERMÉ / MAINTENANCE.**"
             )
             .addFields(
-                { name: '🆔 ID du Serveur', value: `\`\`\`${GAME_SERVER_ID}\`\`\``, inline: false },
+                { name: '🆔 ID du Serveur', value: '```' + GAME_SERVER_ID + '```', inline: false },
                 { name: '📌 État', value: isOpen ? '🟢 **OUVERT**' : '🔴 **FERMÉ**', inline: false }
             )
             .setTimestamp()
-            .setFooter({ text: `Mis à jour par ${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
+            .setFooter({ text: 'Mis à jour par ' + message.author.tag, iconURL: message.author.displayAvatarURL() });
 
         await message.channel.send({ embeds: [etatEmbed] });
         message.delete().catch(() => {});
@@ -329,7 +330,7 @@ client.on('interactionCreate', async (interaction) => {
 
         if (interaction.member.roles.cache.has(MEMBER_ROLE_ID)) {
             return interaction.reply({ 
-                content: "ℹ️ Tu đã déjà accepté le règlement !", 
+                content: "ℹ️ Tu as déjà accepté le règlement !", 
                 flags: MessageFlags.Ephemeral 
             });
         }
@@ -344,12 +345,12 @@ client.on('interactionCreate', async (interaction) => {
 
             try {
                 await interaction.user.send(
-                    `🎉 **Bienvenue sur ${interaction.guild.name} !**\n\n` +
-                    `Ton rôle **${role.name}** t'a été attribué avec succès suite à la validation du règlement.\n` +
-                    `Tu as désormais accès à l'intégralité des salons textuels et vocaux du serveur. Bon jeu à toi !`
+                    '🎉 **Bienvenue sur ' + interaction.guild.name + ' !**\n\n' +
+                    'Ton rôle **' + role.name + '** t\'a été attribué avec succès suite à la validation du règlement.\n' +
+                    'Tu as désormais accès à l\'intégralité des salons textuels et vocaux du serveur. Bon jeu à toi !'
                 );
             } catch (dmError) {
-                console.log(`⚠️ Impossible d'envoyer un MP à ${interaction.user.tag} (MP désactivés).`);
+                console.log("⚠️ Impossible d'envoyer un MP à " + interaction.user.tag + " (MP désactivés).");
             }
 
         } catch (error) {
@@ -596,13 +597,13 @@ client.on('interactionCreate', async (interaction) => {
                 try {
                     const dmEmbed = new EmbedBuilder()
                         .setTitle("📜 Fermeture de votre ticket")
-                        .setDescription(`Votre ticket \`\${interaction.channel.name}\` sur **${interaction.guild.name}** a été fermé.\nVous trouverez ci-joint l'historique complet de vos échanges.`)
+                        .setDescription("Votre ticket `" + interaction.channel.name + "` sur **" + interaction.guild.name + "** a été fermé.\nVous trouverez ci-joint l'historique complet de vos échanges.")
                         .setColor(0x5865F2)
                         .setTimestamp();
 
                     await ticketOwner.send({ embeds: [dmEmbed], files: [attachment] });
                 } catch (dmErr) {
-                    console.log(`⚠️ Impossible d'envoyer la transcription en MP à ${ticketOwner.tag} (MP désactivés).`);
+                    console.log("⚠️ Impossible d'envoyer la transcription en MP à " + ticketOwner.tag + " (MP désactivés).");
                 }
             }
 
