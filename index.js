@@ -32,7 +32,6 @@ const STAFF_ROLE_ID = '1555953788249186437';
 const MEMBER_ROLE_ID = '1555965378965012490'; 
 const TICKET_CATEGORY_ID = '1559370830033719317';
 const LOGS_CHANNEL_ID = '1559381144540020767';
-const SUSPECT_COMMAND_CHANNEL_ID = '1559338836620746813'; 
 const SUSPECT_PING_ROLE_ID = '1555953788249186437'; 
 const GAME_SERVER_ID = 'bf3f06f5-6f4f-4b06-8cac-70bb1a558103'; 
 
@@ -56,15 +55,14 @@ client.on('messageCreate', async (message) => {
     // ==========================================
     if (message.content.startsWith('!embed')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande.", flags: MessageFlags.Ephemeral });
+            return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande." });
         }
 
         const args = message.content.slice(6).trim().split('|');
         
         if (args.length < 2) {
             return message.reply({ 
-                content: '❌ Utilisation incorrecte !\nFormat attendu : `!embed Titre de l\'annonce | Description de l\'annonce | #HEXCOLOR (optionnel)`',
-                flags: MessageFlags.Ephemeral 
+                content: '❌ Utilisation incorrecte !\nFormat attendu : `!embed Titre de l\'annonce | Description de l\'annonce | #HEXCOLOR (optionnel)`'
             });
         }
 
@@ -90,7 +88,7 @@ client.on('messageCreate', async (message) => {
     // ==========================================
     if (message.content === '!setup-rules') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply({ content: "❌ Tu n'as pas les permissions pour envoyer le règlement.", flags: MessageFlags.Ephemeral });
+            return message.reply({ content: "❌ Tu n'as pas les permissions pour envoyer le règlement." });
         }
 
         const imageEmbed = new EmbedBuilder()
@@ -104,7 +102,7 @@ client.on('messageCreate', async (message) => {
                 "**1. Respect & Courtoisie**\n" +
                 "Le respect mutuel est obligatoire. Aucune insulte, propos haineux, raciste, sexiste ou discriminatoire ne sera toléré.\n\n" +
                 "**2. Pas de Spam ni de Publicité**\n" +
-                "Le spam, le flood et la publicité non autorisée (en MP ou dans les salons) sont strictly interdits.\n\n" +
+                "Le spam, le flood et la publicité non autorisée (en MP ou dans les salons) sont strictement interdits.\n\n" +
                 "**3. Pseudo & Photo de profil**\n" +
                 "Merci d'avoir un pseudo et une photo de profil appropriés et lisibles.\n\n" +
                 "**4. Respect des salons**\n" +
@@ -155,7 +153,7 @@ client.on('messageCreate', async (message) => {
     // ==========================================
     if (message.content === '!setup-ticket') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply({ content: "❌ Tu n'as pas les permissions pour configurer les tickets.", flags: MessageFlags.Ephemeral });
+            return message.reply({ content: "❌ Tu n'as pas les permissions pour configurer les tickets." });
         }
 
         const embed = new EmbedBuilder()
@@ -201,62 +199,63 @@ client.on('messageCreate', async (message) => {
     }
 
     // ==========================================
-    // 4. COMMANDE DE SUIVI DES SUSPECTS (!suspect) - CORRIGÉE
+    // 4. COMMANDE SETUP DES SANCTIONS (!setup-sanction)
     // ==========================================
-    if (message.content.startsWith('!suspect')) {
+    if (message.content === '!setup-sanction') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande.", flags: MessageFlags.Ephemeral });
+            return message.reply({ content: "❌ Tu n'as pas les permissions pour configurer les sanctions." });
         }
 
-        if (message.channel.id !== SUSPECT_COMMAND_CHANNEL_ID) {
-            return message.reply({ 
-                content: "❌ Tu ne peux pas utiliser cette commande ici ! Utilise-la dans le salon <#" + SUSPECT_COMMAND_CHANNEL_ID + ">.", 
-                flags: MessageFlags.Ephemeral 
-            });
-        }
+        const embed = new EmbedBuilder()
+            .setTitle('⚖️ Panel des Sanctions Administratives')
+            .setDescription('Cliquez sur le bouton ci-dessous pour enregistrer une nouvelle sanction administrative.')
+            .setColor(0xED4245)
+            .setTimestamp();
 
-        const args = message.content.slice(8).trim().split('|');
-        
-        if (args.length < 3) {
-            return message.reply({ 
-                content: '❌ Utilisation incorrecte !\nFormat attendu : `!suspect Pseudo du joueur | ID Steam | Raison`',
-                flags: MessageFlags.Ephemeral 
-            });
-        }
+        const sanctionBtn = new ButtonBuilder()
+            .setCustomId('open_sanction_modal')
+            .setLabel('Ajouter une sanction')
+            .setEmoji('➕')
+            .setStyle(ButtonStyle.Danger);
 
-        const playerName = args[0].trim();
-        const steamId = args[1].trim();
-        const reason = args[2].trim();
+        const row = new ActionRowBuilder().addComponents(sanctionBtn);
 
-        const suspectEmbed = new EmbedBuilder()
-            .setTitle('🚨 Dossier de Surveillance - Suspect')
-            .setColor(0xF1C40F)
-            .addFields(
-                { name: '👤 Joueur', value: '`' + playerName + '`', inline: true },
-                { name: 'Steam ID', value: '`' + steamId + '`', inline: true },
-                { name: '📝 Raison / Détails', value: '```\n' + reason + '\n```', inline: false }
-            )
-            .setTimestamp()
-            .setFooter({ text: 'Signalé par ' + message.author.tag, iconURL: message.author.displayAvatarURL() });
-
-        const rolePing = SUSPECT_PING_ROLE_ID ? '<@&' + SUSPECT_PING_ROLE_ID + '>' : '';
-        const messageContentText = rolePing + ' - Nouveau joueur suspect signalé par <@' + message.author.id + '> :';
-
-        await message.channel.send({ 
-            content: messageContentText, 
-            embeds: [suspectEmbed],
-            allowedMentions: { roles: [SUSPECT_PING_ROLE_ID] }
-        });
-
+        await message.channel.send({ embeds: [embed], components: [row] });
         message.delete().catch(() => {});
     }
 
     // ==========================================
-    // 5. COMMANDE ID DU SERVEUR DE JEU (!status-jeu)
+    // 5. COMMANDE SETUP DU SUIVI DES SUSPECTS (!setup-suspect)
+    // ==========================================
+    if (message.content === '!setup-suspect') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply({ content: "❌ Tu n'as pas les permissions pour configurer le panneau de surveillance des suspects." });
+        }
+
+        const embed = new EmbedBuilder()
+            .setTitle('🚨 Panel de Surveillance - Joueurs Suspects')
+            .setDescription('Cliquez sur le bouton ci-dessous pour signaler et enregistrer un nouveau joueur suspect.')
+            .setColor(0xF1C40F)
+            .setTimestamp();
+
+        const suspectBtn = new ButtonBuilder()
+            .setCustomId('open_suspect_modal')
+            .setLabel('Signaler un suspect')
+            .setEmoji('🚨')
+            .setStyle(ButtonStyle.Primary);
+
+        const row = new ActionRowBuilder().addComponents(suspectBtn);
+
+        await message.channel.send({ embeds: [embed], components: [row] });
+        message.delete().catch(() => {});
+    }
+
+    // ==========================================
+    // 6. COMMANDE ID DU SERVEUR DE JEU (!status-jeu)
     // ==========================================
     if (message.content === '!status-jeu') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande.", flags: MessageFlags.Ephemeral });
+            return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande." });
         }
 
         const serverEmbed = new EmbedBuilder()
@@ -274,12 +273,12 @@ client.on('messageCreate', async (message) => {
     }
 
     // ==========================================
-    // 6. COMMANDE ÉTAT DU SERVEUR DE JEU (!etat-serveur / !état-serveur)
+    // 7. COMMANDE ÉTAT DU SERVEUR DE JEU (!etat-serveur / !état-serveur)
     // ==========================================
     const lowerContent = message.content.toLowerCase().trim();
     if (lowerContent.startsWith('!etat-serveur') || lowerContent.startsWith('!état-serveur')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande.", flags: MessageFlags.Ephemeral });
+            return message.reply({ content: "❌ Tu n'as pas les permissions pour utiliser cette commande." });
         }
 
         const parts = lowerContent.split(/\s+/);
@@ -287,8 +286,7 @@ client.on('messageCreate', async (message) => {
 
         if (statusArg !== 'ouvert' && statusArg !== 'ferme' && statusArg !== 'fermé') {
             return message.reply({ 
-                content: '❌ Utilisation incorrecte !\nFormat attendu : `!etat-serveur ouvert` ou `!etat-serveur ferme`',
-                flags: MessageFlags.Ephemeral 
+                content: '❌ Utilisation incorrecte !\nFormat attendu : `!etat-serveur ouvert` ou `!etat-serveur ferme`'
             });
         }
 
@@ -314,11 +312,171 @@ client.on('messageCreate', async (message) => {
 });
 
 // ==========================================
-// 7. GESTION DES INTERACTIONS
+// 8. GESTION DES INTERACTIONS
 // ==========================================
 client.on('interactionCreate', async (interaction) => {
 
-    // A. Validation du règlement via bouton (Auto-rôle + MP)
+    // A. Clic sur le bouton "Signaler un suspect" -> Ouverture du Modal
+    if (interaction.isButton() && interaction.customId === 'open_suspect_modal') {
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return interaction.reply({ 
+                content: "❌ Seuls les administrateurs peuvent signaler des suspects.", 
+                flags: MessageFlags.Ephemeral 
+            });
+        }
+
+        const modal = new ModalBuilder()
+            .setCustomId('modal_suspect_submit')
+            .setTitle('Dossier de Surveillance - Suspect');
+
+        const playerInput = new TextInputBuilder()
+            .setCustomId('suspect_player_name')
+            .setLabel('Nom / Pseudo du joueur :')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: PseudoEnJeu')
+            .setRequired(true);
+
+        const steamInput = new TextInputBuilder()
+            .setCustomId('suspect_steam_id')
+            .setLabel('ID Steam :')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: 76561198xxxxxxxxx')
+            .setRequired(true);
+
+        const reasonInput = new TextInputBuilder()
+            .setCustomId('suspect_reason')
+            .setLabel('Raison / Détails du comportement :')
+            .setStyle(TextInputStyle.Paragraph)
+            .setPlaceholder('Ex: Beaucoup de kills suspects, déplacements étranges...')
+            .setRequired(true);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(playerInput),
+            new ActionRowBuilder().addComponents(steamInput),
+            new ActionRowBuilder().addComponents(reasonInput)
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    // B. Soumission du Modal Suspect -> Envoi du dossier récapitulatif avec ping du rôle
+    if (interaction.isModalSubmit() && interaction.customId === 'modal_suspect_submit') {
+        const playerName = interaction.fields.getTextInputValue('suspect_player_name');
+        const steamId = interaction.fields.getTextInputValue('suspect_steam_id');
+        const reason = interaction.fields.getTextInputValue('suspect_reason');
+
+        const suspectEmbed = new EmbedBuilder()
+            .setTitle('🚨 Dossier de Surveillance - Suspect')
+            .setColor(0xF1C40F)
+            .addFields(
+                { name: '👤 Joueur', value: '`' + playerName + '`', inline: true },
+                { name: '🆔 ID Steam', value: '`' + steamId + '`', inline: true },
+                { name: '📝 Raison / Détails', value: '```\n' + reason + '\n```', inline: false }
+            )
+            .setTimestamp()
+            .setFooter({ text: 'Signalé par ' + interaction.user.tag, iconURL: interaction.user.displayAvatarURL() });
+
+        const rolePing = SUSPECT_PING_ROLE_ID ? '<@&' + SUSPECT_PING_ROLE_ID + '>' : '';
+        const messageContentText = rolePing + ' - Nouveau joueur suspect signalé par <@' + interaction.user.id + '> :';
+
+        await interaction.channel.send({ 
+            content: messageContentText, 
+            embeds: [suspectEmbed],
+            allowedMentions: { roles: [SUSPECT_PING_ROLE_ID] }
+        });
+
+        await interaction.reply({
+            content: '✅ Joueur enregistré en dossier de surveillance avec succès !',
+            flags: MessageFlags.Ephemeral
+        });
+    }
+
+    // C. Clic sur le bouton "Ajouter une sanction" -> Ouverture du Modal
+    if (interaction.isButton() && interaction.customId === 'open_sanction_modal') {
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return interaction.reply({ 
+                content: "❌ Seuls les administrateurs peuvent ajouter des sanctions.", 
+                flags: MessageFlags.Ephemeral 
+            });
+        }
+
+        const modal = new ModalBuilder()
+            .setCustomId('modal_sanction_submit')
+            .setTitle('Enregistrer une sanction');
+
+        const playerInput = new TextInputBuilder()
+            .setCustomId('sanction_player_name')
+            .setLabel('Nom / Pseudo du joueur :')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: NomEnJeu')
+            .setRequired(true);
+
+        const steamInput = new TextInputBuilder()
+            .setCustomId('sanction_steam_id')
+            .setLabel('ID Steam :')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: 76561198xxxxxxxxx')
+            .setRequired(true);
+
+        const bannedInput = new TextInputBuilder()
+            .setCustomId('sanction_is_banned')
+            .setLabel('Banni du serveur (Oui / Non) :')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Indiquez Oui ou Non')
+            .setRequired(true);
+
+        const reasonInput = new TextInputBuilder()
+            .setCustomId('sanction_reason')
+            .setLabel('Raison de la sanction :')
+            .setStyle(TextInputStyle.Paragraph)
+            .setPlaceholder('Détaillez le motif de la sanction...')
+            .setRequired(true);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(playerInput),
+            new ActionRowBuilder().addComponents(steamInput),
+            new ActionRowBuilder().addComponents(bannedInput),
+            new ActionRowBuilder().addComponents(reasonInput)
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    // D. Soumission du Modal Sanction -> Envoi du récapitulatif avec notification des admins (PING)
+    if (interaction.isModalSubmit() && interaction.customId === 'modal_sanction_submit') {
+        const playerName = interaction.fields.getTextInputValue('sanction_player_name');
+        const steamId = interaction.fields.getTextInputValue('sanction_steam_id');
+        const isBanned = interaction.fields.getTextInputValue('sanction_is_banned');
+        const reason = interaction.fields.getTextInputValue('sanction_reason');
+
+        const sanctionEmbed = new EmbedBuilder()
+            .setTitle('⚖️ Registre des Sanctions - Wardogs')
+            .setColor(0xED4245)
+            .addFields(
+                { name: '👤 Joueur', value: '`' + playerName + '`', inline: true },
+                { name: '🆔 ID Steam', value: '`' + steamId + '`', inline: true },
+                { name: '🚫 Banni du Serveur', value: '`' + isBanned + '`', inline: false },
+                { name: '📝 Raison de la Sanction', value: '```\n' + reason + '\n```', inline: false }
+            )
+            .setTimestamp()
+            .setFooter({ text: 'Sanction enregistrée par ' + interaction.user.tag, iconURL: interaction.user.displayAvatarURL() });
+
+        const staffPing = STAFF_ROLE_ID ? '<@&' + STAFF_ROLE_ID + '>' : '';
+        const messageContentText = staffPing + ' - Nouvelle sanction enregistrée par <@' + interaction.user.id + '> :';
+
+        await interaction.channel.send({ 
+            content: messageContentText, 
+            embeds: [sanctionEmbed],
+            allowedMentions: { roles: [STAFF_ROLE_ID] }
+        });
+
+        await interaction.reply({
+            content: '✅ Sanction enregistrée avec succès !',
+            flags: MessageFlags.Ephemeral
+        });
+    }
+
+    // E. Validation du règlement via bouton (Auto-rôle + MP)
     if (interaction.isButton() && interaction.customId === 'accept_rules') {
         const role = interaction.guild.roles.cache.get(MEMBER_ROLE_ID);
         if (!role) {
@@ -362,7 +520,7 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 
-    // B. Sélection dans le menu déroulant des tickets -> Ouverture du Modal
+    // F. Sélection dans le menu déroulant des tickets -> Ouverture du Modal
     if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_select') {
         const category = interaction.values[0];
 
@@ -450,7 +608,7 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 
-    // C. Soumission du Modal -> Création effective du salon privé
+    // G. Soumission du Modal -> Création effective du salon privé
     if (interaction.isModalSubmit() && interaction.customId.startsWith('ticket_modal_')) {
         const category = interaction.customId.replace('ticket_modal_', '');
         const reason = interaction.fields.getTextInputValue('ticket_reason');
@@ -568,7 +726,7 @@ client.on('interactionCreate', async (interaction) => {
         });
     }
 
-    // D. Fermeture du ticket, génération du transcript, envoi en MP et logs
+    // H. Fermeture du ticket, génération du transcript, envoi en MP et logs
     if (interaction.isButton() && interaction.customId === 'close_ticket') {
         await interaction.reply('🔒 Génération du transcript et fermeture du salon dans 5 secondes...');
 
