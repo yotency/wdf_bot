@@ -160,7 +160,7 @@ client.on('messageCreate', async (message) => {
             .setTitle('🎫 Centre de Support')
             .setDescription('Sélectionnez la catégorie qui correspond à votre demande dans le menu ci-dessous pour ouvrir un ticket.')
             .setColor(0x5865F2)
-            .setImage('https://image.noelshack.com/fichiers/2026/42/3/1791980704-wdf-regles.jpg');
+            .setImage('https://image.noelshack.com/fichiers/2026/42/5/1792186587-gemini-generated-image-3na7q13na7q13na7.jpg');
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('ticket_select')
